@@ -501,6 +501,7 @@ if __name__ == "__main__":
         flmap0, flmap1 = unpack("<II", f.read(8))
         frba = flmap0 >> 12 & 0xff0
         fmba = (flmap1 & 0xff) << 4
+        fpsba = flmap1 >> 12 & 0xff0
 
         f.seek(frba)
         flreg = unpack("<III", f.read(12))
@@ -650,6 +651,13 @@ if __name__ == "__main__":
             elif args.truncate:
                 print("Truncating file at {:#x}...".format(end_addr))
                 f.truncate(end_addr)
+
+    if me_start > 0 and me11:   # Intel ME > 11 only, ignored on TXE/SPS
+        print("Setting the HAP bit to disable Intel ME...")
+        fdf.seek(fpsba)
+        pchstrp0 = unpack("<I", fdf.read(4))[0]
+        pchstrp0 |= (1 << 16)
+        fdf.write_to(fpsba, pack("<I", pchstrp0))
 
     if args.descriptor:
         print("Removing ME/TXE R/W access to the other flash regions...")
